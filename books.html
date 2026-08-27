@@ -38,6 +38,14 @@
     const input = document.getElementById("searchInput");
     const suggestions = document.getElementById("suggestions");
 
+    // Catálogo manual de títulos con IDs de Gutenberg
+    const catalog = {
+      "Pride and Prejudice": 1342,
+      "Moby Dick": 2701,
+      "Alice in Wonderland": 11,
+      "Don Quijote": 2000
+    };
+
     // Mostrar sugerencias mientras se escribe
     input.addEventListener("input", () => {
       const query = input.value.trim();
@@ -72,33 +80,24 @@
       }
     }
 
-    // Mostrar libro completo si existe en Gutenberg
+    // Mostrar libro completo si existe en el catálogo
     const params = new URLSearchParams(window.location.search);
     const q = params.get("q");
     if(q) {
       document.getElementById("book").textContent = "Buscando libro...";
-      fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(q)}&limit=1`)
-        .then(res => res.json())
-        .then(data => {
-          if(data.docs && data.docs.length > 0) {
-            const book = data.docs[0];
-            if(book.gutenberg && book.gutenberg.length > 0) {
-              const id = book.gutenberg[0];
-              fetch(`https://www.gutenberg.org/files/${id}/${id}-0.txt`)
-                .then(res => res.text())
-                .then(text => {
-                  document.getElementById("book").textContent = text;
-                })
-                .catch(() => {
-                  document.getElementById("book").textContent = "No se pudo cargar el texto.";
-                });
-            } else {
-              document.getElementById("book").textContent = "Este título no está en Project Gutenberg.";
-            }
-          } else {
-            document.getElementById("book").textContent = "No se encontró el libro.";
-          }
-        });
+      const id = catalog[q];
+      if(id) {
+        fetch(`https://www.gutenberg.org/files/${id}/${id}-0.txt`)
+          .then(res => res.text())
+          .then(text => {
+            document.getElementById("book").textContent = text;
+          })
+          .catch(() => {
+            document.getElementById("book").textContent = "No se pudo cargar el texto.";
+          });
+      } else {
+        document.getElementById("book").textContent = "Este título no está en tu catálogo de Gutenberg.";
+      }
     }
   </script>
 </body>
