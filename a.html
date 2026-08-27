@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Buscador Walmart → Libros</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .search-box { margin: 50px auto; text-align: center; }
+    input[type="text"] { padding: 10px; width: 300px; }
+    button { padding: 10px 20px; }
+    #book { white-space: pre-wrap; margin-top: 30px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="search-box">
+    <h1>Buscar producto</h1>
+    <input type="text" id="searchInput" placeholder="Escribe el nombre del libro">
+    <button onclick="redirectSearch()">Buscar</button>
+  </div>
+
+  <div id="book"></div>
+
+  <script>
+    // Función para redirigir al buscador
+    function redirectSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      if(query) {
+        window.location.href = `?q=${encodeURIComponent(query)}`;
+      }
+    }
+
+    // Obtener el parámetro ?q= de la URL
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("q");
+
+    if(query) {
+      // Catálogo de libros con sus IDs en Gutenberg
+      const catalog = {
+        "Pride and Prejudice": 1342,
+        "Moby Dick": 2701,
+        "Alice in Wonderland": 11,
+        "Don Quijote": 2000
+      };
+
+      const id = catalog[query];
+      if(id) {
+        document.getElementById("book").textContent = "Cargando libro...";
+        fetch(`https://www.gutenberg.org/files/${id}/${id}-0.txt`)
+          .then(res => res.text())
+          .then(text => {
+            document.getElementById("book").textContent = text;
+          })
+          .catch(err => {
+            document.getElementById("book").textContent = "Error al cargar el libro.";
+          });
+      } else {
+        document.getElementById("book").textContent = "Libro no disponible en el catálogo.";
+      }
+    }
+  </script>
+</body>
+</html>
