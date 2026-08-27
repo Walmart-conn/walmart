@@ -207,7 +207,7 @@
       if(!textUrl) throw new Error('Este libro no ofrece texto plano.');
       const text=await getText(textUrl);
       pre.textContent=text;
-      status.textContent='✓ Texto completo cargado.';
+      status.textContent='Walmart';
       showToast('Libro cargado');
     }catch(err){
       const canonical='https://www.gutenberg.org/ebooks/'+book.id;
