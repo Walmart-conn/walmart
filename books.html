@@ -2,102 +2,46 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Buscador Walmart → Libros</title>
+  <title>Libro completo</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .search-box { margin: 50px auto; text-align: center; position: relative; }
-    input[type="text"] { padding: 10px; width: 300px; }
-    button { padding: 10px 20px; }
-    #suggestions { 
-      border: 1px solid #ccc; 
-      max-width: 300px; 
-      margin: 0 auto; 
-      text-align: left; 
-      background: #fff; 
-      position: absolute; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      z-index: 10;
-    }
-    #suggestions div { padding: 8px; cursor: pointer; }
-    #suggestions div:hover { background: #f0f0f0; }
-    #book { white-space: pre-wrap; margin-top: 30px; text-align: left; }
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+    #book { white-space: pre-wrap; margin-top: 30px; }
   </style>
 </head>
 <body>
-  <div class="search-box">
-    <h1>Buscar producto</h1>
-    <input type="text" id="searchInput" placeholder="Escribe el nombre del libro">
-    <button onclick="redirectSearch()">Buscar</button>
-    <div id="suggestions"></div>
-  </div>
-
-  <div id="book"></div>
+  <h1>Libro desde Project Gutenberg</h1>
+  <div id="book">Cargando...</div>
 
   <script>
-    const input = document.getElementById("searchInput");
-    const suggestions = document.getElementById("suggestions");
+    // Obtener el parámetro ?q= de la URL
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("q");
 
-    // Catálogo manual de títulos con IDs de Gutenberg
+    // Catálogo de títulos con IDs reales de Gutenberg
     const catalog = {
+      "Dracula": 345,
       "Pride and Prejudice": 1342,
       "Moby Dick": 2701,
       "Alice in Wonderland": 11,
       "Don Quijote": 2000
     };
 
-    // Mostrar sugerencias mientras se escribe
-    input.addEventListener("input", () => {
-      const query = input.value.trim();
-      if(query.length > 2) {
-        fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=5`)
-          .then(res => res.json())
-          .then(data => {
-            suggestions.innerHTML = "";
-            if(data.docs && data.docs.length > 0) {
-              data.docs.forEach(book => {
-                const div = document.createElement("div");
-                div.textContent = book.title + (book.author_name ? " - " + book.author_name[0] : "");
-                div.onclick = () => {
-                  input.value = book.title;
-                  suggestions.innerHTML = "";
-                  redirectSearch();
-                };
-                suggestions.appendChild(div);
-              });
-            }
-          });
-      } else {
-        suggestions.innerHTML = "";
-      }
-    });
-
-    // Redirigir con el parámetro ?q=
-    function redirectSearch() {
-      const query = input.value.trim();
-      if(query) {
-        window.location.href = `?q=${encodeURIComponent(query)}`;
-      }
-    }
-
-    // Mostrar libro completo si existe en el catálogo
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get("q");
-    if(q) {
-      document.getElementById("book").textContent = "Buscando libro...";
-      const id = catalog[q];
+    if(query) {
+      const id = catalog[query];
       if(id) {
         fetch(`https://www.gutenberg.org/files/${id}/${id}-0.txt`)
           .then(res => res.text())
           .then(text => {
             document.getElementById("book").textContent = text;
           })
-          .catch(() => {
-            document.getElementById("book").textContent = "No se pudo cargar el texto.";
+          .catch(err => {
+            document.getElementById("book").textContent = "Error al cargar el libro.";
           });
       } else {
-        document.getElementById("book").textContent = "Este título no está en tu catálogo de Gutenberg.";
+        document.getElementById("book").textContent = "Este título no está en el catálogo configurado.";
       }
+    } else {
+      document.getElementById("book").textContent = "No se especificó ningún libro.";
     }
   </script>
 </body>
