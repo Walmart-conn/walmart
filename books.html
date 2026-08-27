@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Buscador Walmart → Libros</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .search-box { margin: 50px auto; text-align: center; position: relative; }
+    input[type="text"] { padding: 10px; width: 300px; }
+    button { padding: 10px 20px; }
+    #suggestions { 
+      border: 1px solid #ccc; 
+      max-width: 300px; 
+      margin: 0 auto; 
+      text-align: left; 
+      background: #fff; 
+      position: absolute; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      z-index: 10;
+    }
+    #suggestions div { padding: 8px; cursor: pointer; }
+    #suggestions div:hover { background: #f0f0f0; }
+    #book { white-space: pre-wrap; margin-top: 30px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="search-box">
+    <h1>Buscar producto</h1>
+    <input type="text" id="searchInput" placeholder="Escribe el nombre del libro">
+    <button onclick="redirectSearch()">Buscar</button>
+    <div id="suggestions"></div>
+  </div>
+
+  <div id="book"></div>
+
+  <script>
+    const input = document.getElementById("searchInput");
+    const suggestions = document.getElementById("suggestions");
+
+    // Mostrar sugerencias mientras se escribe
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+      if(query.length > 2) {
+        fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=5`)
+          .then(res => res.json())
+          .then(data => {
+            suggestions.innerHTML = "";
+            if(data.docs && data.docs.length > 0) {
+              data.docs.forEach(book => {
+                const div = document.createElement("div");
+                div.textContent = book.title + (book.author_name ? " - " + book.author_name[0] : "");
+                div.onclick = () => {
+                  input.value = book.title;
+                  suggestions.innerHTML = "";
+                  redirectSearch();
+                };
+                suggestions.appendChild(div);
+              });
+            }
+          });
+      } else {
+        suggestions.innerHTML = "";
+      }
+    });
+
+    // Redirigir con el parámetro ?q=
+    function redirectSearch() {
+      const query = input.value.trim();
+      if(query) {
+        window.location.href = `?q=${encodeURIComponent(query)}`;
+      }
+    }
+
+    // Mostrar libro completo si existe en Gutenberg
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if(q) {
+      document.getElementById("book").textContent = "Buscando libro...";
+      fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(q)}&limit=1`)
+        .then(res => res.json())
+        .then(data => {
+          if(data.docs && data.docs.length > 0) {
+            const book = data.docs[0];
+            if(book.gutenberg && book.gutenberg.length > 0) {
+              const id = book.gutenberg[0];
+              fetch(`https://www.gutenberg.org/files/${id}/${id}-0.txt`)
+                .then(res => res.text())
+                .then(text => {
+                  document.getElementById("book").textContent = text;
+                })
+                .catch(() => {
+                  document.getElementById("book").textContent = "No se pudo cargar el texto.";
+                });
+            } else {
+              document.getElementById("book").textContent = "Este título no está en Project Gutenberg.";
+            }
+          } else {
+            document.getElementById("book").textContent = "No se encontró el libro.";
+          }
+        });
+    }
+  </script>
+</body>
+</html>
